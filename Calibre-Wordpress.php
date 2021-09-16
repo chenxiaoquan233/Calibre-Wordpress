@@ -14,7 +14,7 @@ function calibre_setting_menu() {
         'Calibre',
         'manage_options',
         'Calibre',
-        'calibre_setting_page',
+        'calibre_books_page',
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAPCAYAAADtc08vAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACSklEQVQokXWSvU9TYRTGf+977+2X7aWkAUHEqthAIA4mQqJ/gYsbMcbRmBhHPyY3Byejg64mjCYGEwcNDi4sDA4YTVDAtIkgKpRbSj9ub4He43BvWxPxbCc5z+88ec5Rl4d5LgobAMF5s84twpo+ln2kUNPJdOTVzJfVexxS5pbHFSAV6Cleu3v/tQINcHXs53h2UGdN0xibubR6mB6zL46kM7b4AhWnAoo5lFIAm630+ohZVwIjh6oJN41OZDl+agClIRGLk7ZTpBIJmr5VAFBwUgT1X0C9WkO19hAfXK9BuVKl6ro4NT8fzsU+z90YaovuvJBhENUBaCXE4+Y/9N8VqwAiAB+a1x/ffFpayE29340YsnZ/lrMdQO60TTwaiJRSxGMxAMqesQuUACKqcTHdb18ob3q2+C18YaoD+Lq0wdavEgAiQqbHxjB02KsCQMb47mjDINnbQ8UpgWKyC1h2KBbdbjBag4SONHmAPr1SEpDMUIrtHzWUL10Ho7kUg0cjHYDreViW2XZUAEiZpYSC9exEAjMCKDVx+6UEySWiPr50r2Qnk5Qr1XYoeQTwGRFhPnf+zInwTaxI6+CcBvhWcNl2vA6gWq8jQfj4fuAAJZmEsbMSioMyzEkNMNinGeiVbgZKYVlW2LTybSvD5qLz95m1YlIXG+iF5RbvFltsN4NP3Ns/wDINolGL2YWZDaC53zyQ/p23Owh+GyAwZfbHcRHiwRI8t9nYa3gNM2j1/oOH+Gvj88vVcvMIvtRyz558BAyBJYRPfwA16ucqMNguuwAAAABJRU5ErkJggg==',
         100
     );
@@ -25,26 +25,38 @@ function calibre_setting_menu() {
         'config',
         'manage_options',
         'config',
-        'config'
+        'calibre_config_page'
     );
 }
 add_action( 'admin_menu', 'calibre_setting_menu' );
   
-function calibre_setting_page() {
+function calibre_books_page() {
     ?>
-    
-    <h1>Calibre Books Management</h1>
+    <div class="wrap">
+        <h1>Calibre Books Management</h1>
+        <?php
+            $database_path = get_option('calibre_database_path');
+            if(check_database($database_path, FALSE)) {
+                echo "OK";
+            } else {
+                ?>
+                <p><strong>
+                    Please set database path first!
+                </strong></p>
+                <?php
+            }
+    ?>
+    </div>
     <?php
 }
 
-function config() {
+function calibre_config_page() {
     ?>
     <div class="wrap">
         <?php
-            if(isset($_POST['database-path']) && check_admin_referer('calibre_config')) {
+            if(isset($_POST['database-path']) && check_admin_referer('calibre_config') && check_database($_POST['database-path'], TRUE)) {
                 update_option('calibre_database_path', $_POST['database-path']);
                 $database_path = $_POST['database-path'];
-                check_database();
             } else {
                 $database_path = get_option('calibre_database_path');
             }
@@ -71,45 +83,40 @@ function config() {
     <?php
 }
 
-function check_database() {
-    $database_dir = get_option('calibre_database_path', $default_value='');
+function check_database($database_dir, $echo_message) {
     if(empty($database_dir)) {
-        ?>
-        <div id="message" class="error">
-            <p><strong>
-                Please input the directory path of metadata.db!
-            </strong></p>
-        </div>
-        <?php
+        if($echo_message){
+            hint_message("error", "Please input the directory path of metadata.db!");
+        }
+        return FALSE;
     }
     $database = $database_dir.'/metadata.db';
-    if(is_file($database)) {
+    if(file_exists($database)) {
         $db_perm = fileperms($database);
         if(($db_perm & (1 << 8)) != 0 && ($db_perm & (1 << 7)) != 0) {
-            ?>
-            <div id="message" class="update">
-                <p><strong>
-                    Update Success!
-                </strong></p>
-            </div>
-            <?php
+            if($echo_message) {
+                hint_message("update", "Update Success!");
+            }
+            return TRUE;
         } else {
-            ?>
-            <div id="message" class="error">
-                <p><strong>
-                    Please check read and write permission of metadata.db!
-                </strong></p>
-            </div>
-            <?php
+            if($echo_message) {
+                hint_message("error", "Please check read and write permission of metadata.db!");
+            }
         }
     } else {
-        ?>
-        <div id="message" class="error">
-            <p><strong>
-                metadata.db not found, or check the read permission of the directory.
-            </strong></p>
-        </div>
-        <?php
+        if($echo_message) {
+            hint_message("error", "metadata.db not found, or check the read permission of the directory.");
+        }
     }
+    return FALSE;
+}
 
+function hint_message($type, $message) {
+    ?>
+    <div id="message" class="<?php echo $type; ?>">
+        <p><strong>
+            <?php echo $message; ?>
+        </strong></p>
+    </div>
+    <?php
 }
