@@ -8,6 +8,8 @@
     Author URI: https://xqchen.site
 */
 
+require_once(__DIR__.'/CalibreDB.php');
+
 function calibre_setting_menu() {
     add_menu_page( 
         'Calibre',
@@ -37,7 +39,36 @@ function calibre_books_page() {
         <?php
             $database_path = get_option('calibre_database_path');
             if(check_database($database_path, FALSE)) {
-                echo "OK";
+                ?>
+                <h2><strong>
+                    Book list
+                </strong></h2>
+                <div class = "wrap">
+                    <table class="widefat striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>has_cover</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $book_list = CalibreDB::get_book_list(1, 5);
+                        foreach($book_list as $book) {
+                            ?>
+                            <tr>
+                                <td><?php echo $book->get_title(); ?></td>
+                                <td><?php echo $book->get_author(); ?></td>
+                                <td><?php echo $book->get_has_cover(); ?></td>
+                            </tr>
+                            <?php
+                        } 
+                        ?>         
+                        </tbody>
+                    </table>
+                </div>
+                <?php
             } else {
                 ?>
                 <p><strong>
