@@ -29,5 +29,26 @@ class CalibreDB{
         CalibreDB::disconnect($db);
         return $book_list;
     }
+
+    public static function get_book_path_by_id($id) {
+        $db = CalibreDB::connect();
+        $sql =<<<EOF
+            SELECT path
+            FROM books
+            WHERE id=$id;
+        EOF;
+        
+        if($ret = $db->query($sql)) {
+            if($row = $ret->fetchArray(SQLITE3_ASSOC)) {
+                $path = $row['path'];
+            } else {
+                $path = "";
+            }
+        } else {
+            $path = "";
+        }
+        CalibreDB::disconnect($db);
+        return $path;
+    }
 }
 ?>

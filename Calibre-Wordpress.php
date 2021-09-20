@@ -50,6 +50,7 @@ function calibre_books_page() {
                                 <th>Title</th>
                                 <th>Author</th>
                                 <th>has_cover</th>
+                                <th>operation</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,6 +62,11 @@ function calibre_books_page() {
                                 <td><?php echo $book->get_title(); ?></td>
                                 <td><?php echo $book->get_author(); ?></td>
                                 <td><?php echo $book->get_has_cover(); ?></td>
+                                <form method="POST" action="/Calibre/view.php">
+                                    <input type="hidden" name="id" value="<?php echo $book->get_id(); ?>" />
+                                    <input type="hident" name="file_type" value="pdf" />
+                                    <td><input type="submit"><span class="dashicons dashicons-visibility" ></span>view</input></td>
+                                </form>
                             </tr>
                             <?php
                         } 
@@ -150,4 +156,13 @@ function hint_message($type, $message) {
         </strong></p>
     </div>
     <?php
+}
+
+function view_pdf() {
+    if(isset($_POST['id'])) {
+        CalibreDB::get_book_path_by_id($_POST['id']);
+        header("Content-type: application/pdf");
+        header("Content-Length: ".filesize($file_path));
+        readfile($file_path);
+    }
 }
